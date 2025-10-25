@@ -2,9 +2,9 @@
 
 #include "Webserver/StringUtil.h"
 
-HTTPMessage HTTPMessage::parse(const char* buffer, size_t n)
+HTTPRequest HTTPRequest::parse(const char* buffer, size_t n)
 {
-    HTTPMessage msg;
+    HTTPRequest msg;
     if(n == 0)
     {
         return msg;
@@ -12,17 +12,17 @@ HTTPMessage HTTPMessage::parse(const char* buffer, size_t n)
 
     StringParser parser(buffer, n);
 
-    msg.m_method = parser.untilChar(' ');
+    msg.method = parser.untilChar(' ');
 
     parser.skipOne();
-    msg.m_path = parser.untilChar('?');
+    msg.path = parser.untilChar('?');
     if(parser.isError())
     {
-        msg.m_path = parser.untilChar(' ');
+        msg.path = parser.untilChar(' ');
     }
     else
     {
-        while(!parser.isEndOfBuffer() && !parser.isError() && *parser.getPosition() != ' ' && msg.m_queryParams.size() < 32)
+        while(!parser.isEndOfBuffer() && !parser.isError() && *parser.getPosition() != ' ' && msg.queryParams.size() < 32)
         {
             parser.skipOne();
             std::string paramName = parser.untilChar('=');
@@ -32,8 +32,8 @@ HTTPMessage HTTPMessage::parse(const char* buffer, size_t n)
             {
                 paramValue = parser.untilChar(' ');
             }
-            msg.m_queryParams[paramName] = paramValue;
-            if(msg.m_queryParams.size() > 31)
+            msg.queryParams[paramName] = paramValue;
+            if(msg.queryParams.size() > 31)
             {
                 break;
             }
@@ -41,7 +41,7 @@ HTTPMessage HTTPMessage::parse(const char* buffer, size_t n)
     }
 
     parser.skipOne();
-    msg.m_version = parser.untilChar('\r');
+    msg.version = parser.untilChar('\r');
 
     if(parser.next() != '\n')
     {
@@ -50,7 +50,7 @@ HTTPMessage HTTPMessage::parse(const char* buffer, size_t n)
 
     parser.skipOne();
 
-    while(!parser.isEndOfBuffer() && !parser.isError() && *parser.getPosition() != '\r' && msg.m_headers.size() < 32)
+    while(!parser.isEndOfBuffer() && !parser.isError() && *parser.getPosition() != '\r' && msg.headers.size() < 32)
     {
         std::string headerName = parser.untilChar(':');
 
@@ -61,7 +61,7 @@ HTTPMessage HTTPMessage::parse(const char* buffer, size_t n)
         }
 
         std::string headerValue = parser.untilChar('\r');
-        msg.m_headers[headerName] = headerValue;
+        msg.headers[headerName] = headerValue;
 
         if(parser.next() != '\n')
         {

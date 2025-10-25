@@ -5,30 +5,33 @@
 
 #include "Webserver/HTTPServer.h"
 
-static void handle_route(const HTTPMessage& req)
+static void handle_route(const HTTPRequest& req, HTTPResponse& res)
 {
 	printf("Parsed client request:\n");
-	printf("- Method: %s\n", req.m_method.c_str());
-	printf("- Path: %s\n", req.m_path.c_str());
-	printf("- Version: %s\n", req.m_version.c_str());
+	printf("- Method: %s\n", req.method.c_str());
+	printf("- Path: %s\n", req.path.c_str());
+	printf("- Version: %s\n", req.version.c_str());
 	printf("- Query parameters:\n");
-	for(auto& kv : req.m_queryParams)
+	for(auto& kv : req.queryParams)
 	{
 		printf("\t%s: %s\n", kv.first.c_str(), kv.second.c_str());
 	}
 	printf("- Headers:\n");
-	for(auto& kv : req.m_headers)
+	for(auto& kv : req.headers)
 	{
 		printf("\t%s: %s\n", kv.first.c_str(), kv.second.c_str());
 	}
 	printf("\n");
+	res.statusCode = 200;
 }
 
 
 int main()
 {
 	HTTPServer server;
-	server.addRouteCallback("/led_strip", &handle_route);
+
+	server.addRouteCallback("/led_strip/", &handle_route);
+	server.addServeDirectory("/", "public");
 
 	server.listen(1234);
 

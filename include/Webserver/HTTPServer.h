@@ -1,33 +1,31 @@
 #pragma once
 
 #include <cstdint>
+#include <functional>
 #include <string>
 #include <unordered_map>
-#include <functional>
 
-#include "Webserver/HTTPRequest.h"
-#include "Webserver/HTTPPath.h"
+#include "Webserver/RouteHandler.h"
 
 class HTTPServer
 {
 public:
-    using RouteCallbackFn = std::function<void(const HTTPMessage&)>;
-
-public:
     void listen(uint16_t port);
-    void setServeDirectory(const HTTPPath& route, const std::filesystem::path& directoryPath)
+
+    void addServeDirectory(const HTTPPath& route, const std::filesystem::path& directoryPath)
     {
-        m_serveDirectory = directoryPath;
-        m_serveDirectoryRoute = route;
+        m_serveDirectoryRouteHandler.addRouteCallback(route, std::bind(handleServeDirectoryRequest, std::placeholders::_1, std::placeholders::_2, directoryPath));
     }
 
-    void addRouteCallback(const HTTPPath& route, RouteCallbackFn callbackFn)
+    void addRouteCallback(const HTTPPath& route, RouteHandler::CallbackFn callbackFn)
     {
-        m_routeCallbacks.push_back({route, callbackFn});
+        m_routeHandler.addRouteCallback(route, callbackFn);
     }
 
 private:
-    std::filesystem::path m_serveDirectory;
-    HTTPPath m_serveDirectoryRoute;
-    std::vector<std::pair<HTTPPath, RouteCallbackFn>> m_routeCallbacks;
+    static void handleServeDirectoryRequest(const HTTPRequest& req, HTTPResponse& res, const std::filesystem::path& directoryPath);
+
+private:
+    RouteHandler m_routeHandler;
+    RouteHandler m_serveDirectoryRouteHandler;
 };

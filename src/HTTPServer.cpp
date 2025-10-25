@@ -19,7 +19,7 @@ static void onError(const std::string& msg)
 static constexpr size_t bufferSize = 1024 * 10;
 static char* buffer = new char[bufferSize];
 
-static void handleServeDirectoryRequest(const HTTPMessage& req)
+void HTTPServer::handleServeDirectoryRequest(const HTTPRequest& req, HTTPResponse& res, const std::filesystem::path& directoryPath)
 {
 	printf("Handle serve directory\n");
 }
@@ -52,7 +52,7 @@ void HTTPServer::listen(uint16_t port)
 	{
 		printf("Waiting for client to connect...\n");
 		int clientSocket_fd = accept(socket_fd, (struct sockaddr *) &client_addr, &clientLength);
-		if (clientSocket_fd < 0) 
+		if (clientSocket_fd < 0)
 		{
 			onError("Error on accept()");
 		}
@@ -67,25 +67,19 @@ void HTTPServer::listen(uint16_t port)
 		printf("read() returned %d\n", n);
 		printf("---------- Client message ----------\n%s\n------------------------------------\n", buffer);
 
-		HTTPMessage msg = HTTPMessage::parse(buffer, n);
+		HTTPResponse res;
+        HTTPRequest req = HTTPRequest::parse(buffer, n);
+		if(!m_routeHandler.handleRequest(req, res))
+		{
+			m_serveDirectoryRouteHandler.handleRequest(req, res);
+		}
 
-        if(!m_serveDirectory.empty() && msg.m_path.rfind(m_serveDirectory, 0) == 0)
-        {
-            handleServeDirectoryRequest(msg);
-        }
-        else
-        {
-            for(const auto&[path, callbackFn] : m_routeCallbacks)
-            {
-                if(path.getPath() == "*" || msg.m_path.rfind(path.getPath(), 0) == 0)
-                {
-                    callbackFn(msg);
-                }
-            }
-        }
-
-		std::string response = "HTTP/1.1 200 OK\njeff: hello\n\nloooooooooooooool";
-		n = write(clientSocket_fd, response.c_str(), response.size());
+		size_t responseSize = res.createResponse(buffer, bufferSize);
+		if(responseSize == 0)
+		{
+			onError("Error on write()");
+		}
+		n = write(clientSocket_fd, buffer, responseSize);
 		if (n < 0)
 		{
 			onError("Error on write()");
