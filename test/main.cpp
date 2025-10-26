@@ -22,16 +22,15 @@ static void handle_route(const HTTPRequest& req, HTTPResponse& res)
 		printf("\t%s: %s\n", kv.first.c_str(), kv.second.c_str());
 	}
 	printf("\n");
-	res.statusCode = 200;
+	res.setStatusCode(200);
 }
-
 
 int main()
 {
 	HTTPServer server;
 
 	server.addRouteCallback("/led_strip/", &handle_route);
-	server.addServeDirectory("/", "public");
+	server.addServeDirectory("/", "./public");
 
 	server.listen(1234);
 

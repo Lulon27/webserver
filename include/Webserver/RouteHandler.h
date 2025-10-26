@@ -25,7 +25,7 @@ public:
 			if(path.getPath() == "*" || req.path.rfind(path.getPath(), 0) == 0)
 			{
 				callbackFn(req, res);
-                return true;
+                return true;// Only handle the first match for now
 			}
 		}
         return false;

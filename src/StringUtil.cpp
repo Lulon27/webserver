@@ -74,3 +74,14 @@ void StringWriter::writeFormat(const char* format, ...)
 	m_current += numberWouldHaveBeenWritten;
 	
 }
+
+void StringWriter::copy(const char* source, size_t length)
+{
+	if(isEndOfBuffer())
+	{
+		return;
+	}
+	size_t realLength = std::min(length, getRemaining());
+	memcpy(m_current, source, realLength);
+	m_current += realLength;
+}

@@ -48,6 +48,7 @@ public:
 
     void write(const char* source);
     void writeFormat(const char* format, ...);
+    void copy(const char* source, size_t length);
 
     bool isEndOfBuffer() const
     {

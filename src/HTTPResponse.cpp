@@ -78,19 +78,57 @@ static const char* getStatusCodeText(HTTPResponse::StatusCode statusCode)
     }
 }
 
-HTTPResponse::HTTPResponse() : version("HTTP/1.1"), statusCode(404)
+HTTPResponse::HTTPResponse() : m_version("HTTP/1.1"), m_statusCode(404)
 {
 
+}
+
+HTTPResponse::StatusCode HTTPResponse::getStatusCode() const
+{
+    return m_statusCode;
+}
+
+void HTTPResponse::setStatusCode(StatusCode statusCode)
+{
+    m_statusCode = statusCode;
+}
+
+const std::string& HTTPResponse::getVersion() const
+{
+    return m_version;
+}
+
+const std::unordered_map<std::string, std::string>& HTTPResponse::getHeaders() const
+{
+    return m_headers;
+}
+
+void HTTPResponse::setContent(const char* content, size_t contentSize)
+{
+    m_content.clear();
+    m_content.shrink_to_fit();
+    if(!content)
+    {
+        return;
+    }
+    m_content.resize(contentSize);
+    memcpy(m_content.data(), content, contentSize);
+}
+
+std::vector<char>& HTTPResponse::getContentBuffer()
+{
+    return m_content;
 }
 
 size_t HTTPResponse::createResponse(char* buffer, size_t bufferSize) const
 {
     StringWriter writer(buffer, bufferSize);
-    //const char text[] = "HTTP/1.1 200 OK\njeff: hello\n\nloooooooooooooool";
-    //memcpy(buffer, text, sizeof(text) - 1);
-    writer.write("HTTP/1.1 ");
-    writer.writeFormat("%d ", statusCode);
-    writer.write(getStatusCodeText(statusCode));
-    writer.write("\njeff: hello\n\nloooooooooooooool");
+    writer.writeFormat("HTTP/1.1 %d %s\n", m_statusCode, getStatusCodeText(m_statusCode));
+    for(const auto& [name, value] : m_headers)
+    {
+        writer.writeFormat("%s: %s\n", name, value);
+    }
+    writer.write("\n");
+    writer.copy(m_content.data(), m_content.size());
     return writer.getRelativePosition();
 }

@@ -3,6 +3,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <errno.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -21,7 +22,57 @@ static char* buffer = new char[bufferSize];
 
 void HTTPServer::handleServeDirectoryRequest(const HTTPRequest& req, HTTPResponse& res, const std::filesystem::path& directoryPath)
 {
-	printf("Handle serve directory\n");
+	std::string_view v = req.path;
+	auto substr = v.substr(1);
+	auto path = directoryPath / substr;
+	
+	if(std::filesystem::is_directory(path))
+	{
+		path /= "index.html";
+	}
+
+	try
+	{
+		printf("%s\n", path.c_str());
+		path = std::filesystem::canonical(path);
+		printf("%s\n", path.c_str());
+	}
+	catch(const std::filesystem::filesystem_error& e)
+	{
+		printf("%s\n", e.code().message().c_str());
+		res.setStatusCode(404);
+		return;
+	}
+
+    if(std::mismatch(path.begin(), path.end(), directoryPath.begin(), directoryPath.end()).second != directoryPath.end())
+	{
+		printf("Request path not in serving directory\n");
+		res.setStatusCode(404);
+		return;
+	}
+	
+	auto& contentBuffer = res.getContentBuffer();
+	auto fp = std::fopen(path.c_str(), "rb");
+	if(!fp)
+	{
+		printf("fopen failed: %s\n", std::strerror(errno));
+		res.setStatusCode(404);
+		return;
+	}
+	std::fseek(fp, 0u, SEEK_END);
+	auto size = std::ftell(fp);
+	if(size < 0)
+	{
+		printf("ftell failed: %s\n", std::strerror(errno));
+		res.setStatusCode(500);
+		return;
+	}
+	contentBuffer.resize(size);
+	std::fseek(fp, 0u, SEEK_SET);
+	std::fread(contentBuffer.data(), 1u, contentBuffer.size(), fp);
+	std::fclose(fp);
+
+	res.setStatusCode(200);
 }
 
 void HTTPServer::listen(uint16_t port)
@@ -71,21 +122,27 @@ void HTTPServer::listen(uint16_t port)
         HTTPRequest req = HTTPRequest::parse(buffer, n);
 		if(!m_routeHandler.handleRequest(req, res))
 		{
-			m_serveDirectoryRouteHandler.handleRequest(req, res);
+			if(!m_serveDirectoryRouteHandler.handleRequest(req, res))
+			{
+				// No handler created a result...
+				close(clientSocket_fd);
+				continue;
+			}
 		}
-
 		size_t responseSize = res.createResponse(buffer, bufferSize);
 		if(responseSize == 0)
 		{
-			onError("Error on write()");
+			printf("ERROR: responseSize == 0\n");
+			close(clientSocket_fd);
+			continue;
 		}
 		n = write(clientSocket_fd, buffer, responseSize);
 		if (n < 0)
 		{
-			onError("Error on write()");
+			printf("ERROR: n < 0\n");
+			close(clientSocket_fd);
+			continue;
 		}
-		printf("write() returned %d\n", n);
-
 		close(clientSocket_fd);
 	}
 	close(socket_fd);
