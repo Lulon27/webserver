@@ -22,7 +22,7 @@ static char* buffer = new char[bufferSize];
 
 void HTTPServer::handleServeDirectoryRequest(const HTTPRequest& req, HTTPResponse& res, const std::filesystem::path& directoryPath)
 {
-	std::string_view v = req.path;
+	std::string_view v = req.path.getPath().string();
 	auto substr = v.substr(1);
 	auto path = directoryPath / substr;
 	
@@ -125,8 +125,7 @@ void HTTPServer::listen(uint16_t port)
 			if(!m_serveDirectoryRouteHandler.handleRequest(req, res))
 			{
 				// No handler created a result...
-				close(clientSocket_fd);
-				continue;
+				// Create default 404 response in the next step
 			}
 		}
 		size_t responseSize = res.createResponse(buffer, bufferSize);

@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Webserver/HTTPPath.h"
+
 #include <string>
 #include <unordered_map>
 
@@ -11,7 +13,8 @@ public:
 public:
 	std::string method;
 	std::string version;
-	std::string path;
+	HTTPPath path;
 	std::unordered_map<std::string, std::string> headers;
 	std::unordered_map<std::string, std::string> queryParams;
+	std::unordered_map<std::string, std::string> pathParams;
 };
