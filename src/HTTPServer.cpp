@@ -22,7 +22,8 @@ static char* buffer = new char[bufferSize];
 
 void HTTPServer::handleServeDirectoryRequest(const HTTPRequest& req, HTTPResponse& res, const std::filesystem::path& directoryPath)
 {
-	std::string_view v = req.path.getPath().string();
+	auto pathStr = req.path.getPath().string();
+	std::string_view v = pathStr;
 	auto substr = v.substr(1);
 	auto path = directoryPath / substr;
 	

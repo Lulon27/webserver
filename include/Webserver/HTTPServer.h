@@ -15,12 +15,12 @@ public:
     void addServeDirectory(const HTTPPath& route, const std::filesystem::path& directoryPath)
     {
         std::filesystem::path canonicalPath = std::filesystem::canonical(directoryPath);
-        m_serveDirectoryRouteHandler.addRouteCallback(route, std::bind(handleServeDirectoryRequest, std::placeholders::_1, std::placeholders::_2, canonicalPath));
+        m_serveDirectoryRouteHandler.addRouteCallback(route, true, std::bind(handleServeDirectoryRequest, std::placeholders::_1, std::placeholders::_2, canonicalPath));
     }
 
     void addRouteCallback(const HTTPPath& route, RouteHandler::CallbackFn callbackFn)
     {
-        m_routeHandler.addRouteCallback(route, callbackFn);
+        m_routeHandler.addRouteCallback(route, false, callbackFn);
     }
 
 private:

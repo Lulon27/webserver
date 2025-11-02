@@ -16,7 +16,7 @@ private:
     class Route
     {
     public:
-        Route(const HTTPPath& path, CallbackFn callbackFunction) : m_path(path), m_callbackFunction(callbackFunction)
+        Route(const HTTPPath& path, bool serveDirectoryRoute, CallbackFn callbackFunction) : m_path(path), m_serveDirectoryRoute(serveDirectoryRoute), m_callbackFunction(callbackFunction)
         {
             m_pathParamNames.reserve(std::distance(path.getPath().begin(), path.getPath().end()));
             for(const auto& segment : path.getPath())
@@ -33,7 +33,7 @@ private:
             }
         }
 
-        bool match(const HTTPRequest& req, const HTTPResponse& res, std::unordered_map<std::string, std::string>& pathParams) const
+        bool match(const HTTPRequest& req, const HTTPResponse& res, bool matchDifferentSize, std::unordered_map<std::string, std::string>& pathParams) const
         {
             if(m_path.getPath() == "*")
 			{
@@ -62,7 +62,7 @@ private:
                 ++itReqPath;
                 ++itRoutePath;
             }
-            if(itReqPath != req.path.getPath().end() || itRoutePath != m_path.getPath().end())
+            if(!matchDifferentSize && itReqPath != req.path.getPath().end() || itRoutePath != m_path.getPath().end())
             {
                 // Different number of segments
                 return false;
@@ -72,6 +72,7 @@ private:
 
     private:
         HTTPPath m_path;
+        bool m_serveDirectoryRoute;
         CallbackFn m_callbackFunction;
 
         // Length is the same as number of path segments.
@@ -82,16 +83,16 @@ private:
     };
 
 public:
-    void addRouteCallback(const HTTPPath& route, CallbackFn callbackFn)
+    void addRouteCallback(const HTTPPath& route, bool serveDirectoryRoute, CallbackFn callbackFn)
     {
-        m_routeCallbacks.emplace_back(route, callbackFn);
+        m_routeCallbacks.emplace_back(route, serveDirectoryRoute ,callbackFn);
     }
 
     bool handleRequest(HTTPRequest& req, HTTPResponse& res) const
     {
         for(const auto& route : m_routeCallbacks)
 		{
-			if(route.match(req, res, req.pathParams))
+			if(route.match(req, res, route.m_serveDirectoryRoute, req.pathParams))
             {
 				route.m_callbackFunction(req, res);
                 return true; // Only handle the first match for now
