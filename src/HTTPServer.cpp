@@ -11,8 +11,11 @@
 
 #include "Webserver/HTTPRequest.h"
 
-static constexpr size_t bufferSize = 1024 * 10;
-static char* buffer = new char[bufferSize];
+// Use different buffers in preperation for future optimizations
+static constexpr size_t bufferSizeRequest = 1024 * 10;
+static constexpr size_t bufferSizeResponse = 1024 * 10;
+static char* bufferRequest = new char[bufferSizeRequest];
+static char* bufferResponse = new char[bufferSizeResponse];
 
 void HTTPServer::handleServeDirectoryRequest(const HTTPRequest& req, HTTPResponse& res, const std::filesystem::path& directoryPath)
 {
@@ -94,16 +97,16 @@ void HTTPServer::listen(uint16_t port)
 		{
 			throw std::runtime_error("Error on accept()");
 		}
-		memset(buffer, 0, bufferSize);
+		memset(bufferRequest, 0, bufferSizeRequest);
 
-		int n = read(clientSocket_fd, buffer, bufferSize - 1);
+		int n = read(clientSocket_fd, bufferRequest, bufferSizeRequest - 1);
 		if (n < 0)
 		{
 			throw std::runtime_error("Error on read()");
 		}
 
 		HTTPResponse res;
-        HTTPRequest req = HTTPRequest::parse(buffer, n);
+        HTTPRequest req = HTTPRequest::parse(bufferRequest, n);
 		if(!m_routeHandler.handleRequest(req, res))
 		{
 			if(!m_serveDirectoryRouteHandler.handleRequest(req, res))
@@ -112,13 +115,14 @@ void HTTPServer::listen(uint16_t port)
 				// Create default 404 response in the next step
 			}
 		}
-		size_t responseSize = res.createResponse(buffer, bufferSize);
+		memset(bufferResponse, 0, bufferSizeResponse);
+		size_t responseSize = res.createResponse(bufferResponse, bufferSizeResponse);
 		if(responseSize == 0)
 		{
 			close(clientSocket_fd);
 			continue;
 		}
-		n = write(clientSocket_fd, buffer, responseSize);
+		n = write(clientSocket_fd, bufferResponse, responseSize);
 		if (n < 0)
 		{
 			close(clientSocket_fd);
@@ -127,5 +131,6 @@ void HTTPServer::listen(uint16_t port)
 		close(clientSocket_fd);
 	}
 	close(socket_fd);
-	delete[] buffer;
+	delete[] bufferRequest;
+	delete[] bufferResponse;
 }
