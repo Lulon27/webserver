@@ -115,6 +115,11 @@ void HTTPResponse::setContent(const char* content, size_t contentSize)
     memcpy(m_content.data(), content, contentSize);
 }
 
+void HTTPResponse::setContent(const std::string& text)
+{
+    setContent(text.c_str(), text.length());
+}
+
 std::vector<char>& HTTPResponse::getContentBuffer()
 {
     return m_content;

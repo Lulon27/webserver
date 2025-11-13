@@ -20,6 +20,7 @@ public:
     const std::string& getVersion() const;
     const std::unordered_map<std::string, std::string>& getHeaders() const;
     void setContent(const char* content, size_t contentSize);
+    void setContent(const std::string& text);
     std::vector<char>& getContentBuffer();
 
 private:
