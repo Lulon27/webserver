@@ -71,11 +71,21 @@ void HTTPServer::listen(uint16_t port)
 {
     struct sockaddr_in server_addr, client_addr;
 
-
 	int socket_fd = socket(AF_INET, SOCK_STREAM, 0);
 	if(socket_fd < 0)
 	{
 		throw std::runtime_error("Failed to create socket");
+	}
+
+	int socketoptValue = 1;
+	if(setsockopt(socket_fd, SOL_SOCKET, SO_REUSEADDR, &socketoptValue, sizeof(socketoptValue)) < 0)
+	{
+		throw std::runtime_error("Failed to set socket options");
+	}
+
+	if(setsockopt(socket_fd, SOL_SOCKET, SO_REUSEPORT, &socketoptValue, sizeof(socketoptValue)) < 0)
+	{
+		throw std::runtime_error("Failed to set socket options");
 	}
 
 	memset(&server_addr, 0, sizeof(server_addr));
