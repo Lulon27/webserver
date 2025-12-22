@@ -136,7 +136,7 @@ size_t HTTPResponse::createResponse(char* buffer, size_t bufferSize) const
     writer.writeFormat("HTTP/1.1 %d %s\n", m_statusCode, getStatusCodeText(m_statusCode));
     for(const auto& [name, value] : m_headers)
     {
-        writer.writeFormat("%s: %s\n", name, value);
+        writer.writeFormat("%s: %s\n", name.c_str(), value.c_str());
     }
     writer.write("\n");
     writer.copy(m_content.data(), m_content.size());
