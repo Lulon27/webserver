@@ -103,6 +103,11 @@ const std::unordered_map<std::string, std::string>& HTTPResponse::getHeaders() c
     return m_headers;
 }
 
+std::unordered_map<std::string, std::string>& HTTPResponse::getHeaders()
+{
+    return m_headers;
+}
+
 void HTTPResponse::setContent(const char* content, size_t contentSize)
 {
     m_content.clear();

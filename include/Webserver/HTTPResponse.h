@@ -19,6 +19,7 @@ public:
     void setStatusCode(StatusCode statusCode);
     const std::string& getVersion() const;
     const std::unordered_map<std::string, std::string>& getHeaders() const;
+    std::unordered_map<std::string, std::string>& getHeaders();
     void setContent(const char* content, size_t contentSize);
     void setContent(const std::string& text);
     std::vector<char>& getContentBuffer();
