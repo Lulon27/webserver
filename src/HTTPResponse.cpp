@@ -133,12 +133,12 @@ std::vector<char>& HTTPResponse::getContentBuffer()
 size_t HTTPResponse::createResponse(char* buffer, size_t bufferSize) const
 {
     StringWriter writer(buffer, bufferSize);
-    writer.writeFormat("HTTP/1.1 %d %s\n", m_statusCode, getStatusCodeText(m_statusCode));
+    writer.writeFormat("HTTP/1.1 %d %s\r\n", m_statusCode, getStatusCodeText(m_statusCode));
     for(const auto& [name, value] : m_headers)
     {
-        writer.writeFormat("%s: %s\n", name.c_str(), value.c_str());
+        writer.writeFormat("%s: %s\r\n", name.c_str(), value.c_str());
     }
-    writer.write("\n");
+    writer.write("\r\n");
     writer.copy(m_content.data(), m_content.size());
     return writer.getRelativePosition();
 }
