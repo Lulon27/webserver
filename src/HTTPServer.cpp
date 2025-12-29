@@ -132,12 +132,18 @@ void HTTPServer::listen(uint16_t port)
 		{
 			throw std::runtime_error("Error on accept()");
 		}
+		struct timeval tv;
+		tv.tv_sec = 1;
+		tv.tv_usec = 0;
+		setsockopt(clientSocket_fd, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof(tv));
+
 		memset(bufferRequest, 0, bufferSizeRequest);
 
 		int n = read(clientSocket_fd, bufferRequest, bufferSizeRequest - 1);
 		if (n < 0)
 		{
-			throw std::runtime_error("Error on read()");
+			close(clientSocket_fd);
+			continue;
 		}
 
 		HTTPResponse res;
