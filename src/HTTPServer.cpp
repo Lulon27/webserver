@@ -14,7 +14,7 @@
 
 // Use different buffers in preperation for future optimizations
 static constexpr size_t bufferSizeRequest = 1024 * 10;
-static constexpr size_t bufferSizeResponse = 1024 * 10;
+static constexpr size_t bufferSizeResponse = 1024 * 1000;
 static char* bufferRequest = new char[bufferSizeRequest];
 static char* bufferResponse = new char[bufferSizeResponse];
 static std::unordered_map<std::filesystem::path, std::string> g_mimeTypes = {{".css",  "text/css"},
