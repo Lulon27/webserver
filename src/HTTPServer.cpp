@@ -8,6 +8,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <unistd.h>
+#include <unordered_map>
 
 #include "Webserver/HTTPRequest.h"
 
@@ -16,6 +17,23 @@ static constexpr size_t bufferSizeRequest = 1024 * 10;
 static constexpr size_t bufferSizeResponse = 1024 * 10;
 static char* bufferRequest = new char[bufferSizeRequest];
 static char* bufferResponse = new char[bufferSizeResponse];
+static std::unordered_map<std::filesystem::path, std::string> g_mimeTypes = {{".css",  "text/css"},
+																			 {".htm",  "text/html"},
+																			 {".html", "text/html"},
+																			 {".js",   "text/javascript"},
+																			 {".png",  "image/png"},
+																			 {".svg",  "image/svg+xml"}};
+static std::string g_emptyString;
+
+static const std::string& getMimeTypeFromExtension(const std::filesystem::path extension)
+{
+	auto it = g_mimeTypes.find(extension);
+	if(it != g_mimeTypes.end())
+	{
+		return it->second;
+	}
+	return g_emptyString;
+}
 
 void HTTPServer::handleServeDirectoryRequest(const HTTPRequest& req, HTTPResponse& res, const std::filesystem::path& directoryPath)
 {
@@ -63,6 +81,13 @@ void HTTPServer::handleServeDirectoryRequest(const HTTPRequest& req, HTTPRespons
 	std::fseek(fp, 0u, SEEK_SET);
 	std::fread(contentBuffer.data(), 1u, contentBuffer.size(), fp);
 	std::fclose(fp);
+
+	auto& mimeType = getMimeTypeFromExtension(path.extension());
+	if(!mimeType.empty())
+	{
+		res.getHeaders()["Content-Type"] = mimeType;
+	}
+	res.getHeaders()["Content-Length"] = std::to_string(size);
 
 	res.setStatusCode(200);
 }
